@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Animated Birthday</title>
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            /* Attractive Pastel Color Palette */
+            --bg-top: #ffdde1;    /* Soft Pink */
+            --bg-bottom: #ee9ca7; /* Deeper Pink */
+            --text-main: #ffffff;
+            --accent-yellow: #f8ffae;
+            --accent-blue: #a1c4fd;
+            --accent-purple: #c2e9fb;
+            --btn-bg: #ffffff;
+            --btn-text: #ee9ca7;
+            --share-panel-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* prevent text selection */
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+        }
+
+        /* --- INPUT SCREEN (STEP 1) --- */
+        #input-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit; /* Matches body gradient */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        #input-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .input-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .input-card h1 {
+            color: var(--text-main);
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+
+        input {
+            padding: 15px 25px;
+            font-size: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            margin-bottom: 25px;
+            width: 300px;
+            text-align: center;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            border: none;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* --- MAIN ANIMATION CANVAS (STEP 2) --- */
+        #main-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #main-canvas.visible {
+            visibility: visible;
+        }
+
+        /* The main message container */
+        .message-container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        #main-canvas.visible .message-container {
+            animation: slideUpFade 1.2s forwards 0.5s;
+        }
+
+        h1.happy-birthday {
+            font-size: 4em;
+            color: var(--text-main);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+
+        .for-text {
+            font-size: 1.5em;
+            color: var(--text-main);
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        #user-name-display {
+            font-size: 3.5em;
+            color: var(--accent-yellow);
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Cake SVG Animation */
+        .cake-icon {
+            margin-top: 30px;
+            width: 100px;
+            height: 100px;
+            animation: bounceCake 2s ease-in-out infinite;
+        }
+
+        /* --- CONFETTI, BALLOONS, PARTICLES --- */
+        .confetti-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Dynamic balloons (styled in JS) */
+        .balloon {
+            position: absolute;
+            bottom: -150px;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.1), 3px 3px 6px rgba(0,0,0,0.1);
+        }
+
+        /* --- SHARE PANEL --- */
+        #share-panel {
+            position: fixed;
+            bottom: -150px; /* Hidden initially */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            background: var(--share-panel-bg);
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
+
+        #share-panel.visible {
+            bottom: 0;
+        }
+
+        #share-panel h3 {
+            color: var(--btn-text);
+            margin-bottom: 15px;
+        }
+
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.2s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-wa { background-color: #25D366; }
+        .btn-fb { background-color: #1877F2; }
+        .btn-tw { background-color: #1DA1F2; }
+        .btn-copy { background-color: #888; color: #fff; }
+
+        #close-share {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            color: #888;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Base floating animation for balloons (triggered by JS) */
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Canvas appearance animation */
+        @keyframes slideUpFade {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Cake bounce animation */
+        @keyframes bounceCake {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="input-screen">
+        <div class="input-card">
+            <h1>Create a Birthday Surprise</h1>
+            <input type="text" id="nameInput" placeholder="Enter Their Name..." maxlength="15">
+            <button class="start-btn" onclick="startCelebration()">Create Magic!</button>
+        </div>
+    </div>
+
+    <div id="main-canvas">
+        
+        <div class="confetti-container" id="confetti-overlay"></div>
+
+        <div class="message-container">
+            <p class="for-text">A special message for</p>
+            <h1 id="user-name-display"></h1>
+            <h1 class="happy-birthday">Happy Birthday!</h1>
+            
+            <svg class="cake-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect x="20" y="60" width="60" height="30" rx="5" fill="#fbc2eb" stroke="#a1c4fd" stroke-width="2"/>
+                <rect x="30" y="45" width="40" height="20" rx="3" fill="#a1c4fd" stroke="#fff" stroke-width="2"/>
+                <rect x="42" y="30" width="4" height="15" fill="#f8ffae" rx="1"/>
+                <rect x="54" y="30" width="4" height="15" fill="#f8ffae" rx="1"/>
+                <path d="M 44 25 Q 46 15, 48 25 Z" fill="#ffdde1"/>
+                <path d="M 56 25 Q 58 15, 60 25 Z" fill="#ffdde1"/>
+            </svg>
+        </div>
+    </div>
+
+    <div id="share-panel">
+        <span id="close-share" onclick="toggleSharePanel()">&times;</span>
+        <h3>Share this Birthday Wish!</h3>
+        <div class="share-buttons">
+            <a href="#" class="share-btn btn-wa" id="share-wa">WhatsApp</a>
+            <a href="#" class="share-btn btn-fb" id="share-fb">Facebook</a>
+            <a href="#" class="share-btn btn-tw" id="share-tw">Twitter</a>
+            <button class="share-btn btn-copy" id="share-copy" onclick="copyLink()">Copy Link</button>
+        </div>
+    </div>
+
+    <script>
+        const inputScreen = document.getElementById('input-screen');
+        const mainCanvas = document.getElementById('main-canvas');
+        const nameInput = document.getElementById('nameInput');
+        const userNameDisplay = document.getElementById('user-name-display');
+        const confettiOverlay = document.getElementById('confetti-overlay');
+        const sharePanel = document.getElementById('share-panel');
+
+        // Main function to trigger the sequence
+        function startCelebration() {
+            let name = nameInput.value.trim();
+            if (name === "") name = "Special Someone";
+
+            userNameDisplay.textContent = name;
+            
+            // Step 1 -> Step 2
+            inputScreen.classList.add('hidden');
+            mainCanvas.classList.add('visible');
+
+            // Start animations after a small delay
+            setTimeout(() => {
+                spawnBalloons(30);
+                startConfettiRain(50);
+            }, 500);
+
+            // Set up share links dynamically with the name
+            setupShareLinks(name);
+        }
+
+        // --- ANIMATION GENERATION ---
+
+        // Generates floating balloons
+        function spawnBalloons(count) {
+            const colors = ["#ffdde1", "#f8ffae", "#a1c4fd", "#c2e9fb", "#ffffff"];
+            for (let i = 0; i < count; i++) {
+                const balloon = document.createElement('div');
+                balloon.classList.add('balloon');
+                
+                // Randomize appearance and animation parameters
+                const size = Math.random() * 80 + 50; // 50px to 130px
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                balloon.style.width = size + 'px';
+                balloon.style.height = size * 1.2 + 'px'; // slightly oval
+                balloon.style.backgroundColor = color;
+                balloon.style.left = Math.random() * 100 + 'vw';
+                
+                const duration = Math.random() * 6 + 10; // 10s to 16s
+                const delay = Math.random() * 10; // 0s to 10s delay
+
+                // Apply the animation dynamically
+                balloon.style.animation = `floatUp ${duration}s linear ${delay}s infinite`;
+
+                confettiOverlay.appendChild(balloon);
+            }
+        }
+
+        // Generates confetti particles
+        function startConfettiRain(count) {
+            const colors = ["#ee9ca7", "#a1c4fd", "#f8ffae", "#ffffff"];
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('balloon'); // Reusing balloon base class, styling uniquely
+                
+                particle.style.width = Math.random() * 8 + 4 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.borderRadius = '2px';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.bottom = '105vh'; // Spawn above top
+
+                // Use the same floatUp but reversed/tweaked for falling?
+                // For simplicity, reusing the rising pattern, just making them tiny.
+                // A better approach would be a separate 'confettiFall' keyframe.
+                
+                const duration = Math.random() * 3 + 2; 
+                const delay = Math.random() * 5; 
+                particle.style.animation = `floatUp ${duration}s linear ${delay}s infinite`;
+
+                confettiOverlay.appendChild(particle);
+            }
+        }
+
+        // --- SHARE LOGIC ---
+
+        // Show/hide the share panel
+        function toggleSharePanel() {
+            sharePanel.classList.toggle('visible');
+        }
+
+        // Setup social share links with personalized message
+        function setupShareLinks(name) {
+            const currentUrl = window.location.href;
+            const message = encodeURIComponent(`I created a special modern birthday wish for ${name}! Check it out: `);
+            const encodedUrl = encodeURIComponent(currentUrl);
+
+            // These links are simple examples and might require actual sharing APIs for native app integration
+            document.getElementById('share-wa').href = `https://api.whatsapp.com/send?text=${message}${encodedUrl}`;
+            document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+            document.getElementById('share-tw').href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${message}`;
+        }
+
+        // Dummy copy link function
+        function copyLink() {
+            const el = document.createElement('textarea');
+            el.value = window.location.href;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("Link copied to clipboard!");
+            toggleSharePanel(); // Hide panel after copy
+        }
+
+        // Add 'Enter' key support for the input
+        nameInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                startCelebration();
+            }
+        });
+
+    </script>
+</body>
+</html>
